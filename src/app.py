@@ -1,7 +1,8 @@
 from flask import Flask, request, render_template, jsonify
+import urllib3
 from web3 import Web3, HTTPProvider
 import json
-import urllib3
+# import requests
 
 blockchain = 'http://127.0.0.1:7545'
 
@@ -15,7 +16,7 @@ def connect():
         contract_abi = artifact_json['abi']
         contract_address = artifact_json['networks']['5777']['address']
     
-    contract = web3.eth.contract(
+        contract = web3.eth.contract(
         abi=contract_abi,
         address=contract_address
     )
@@ -36,8 +37,8 @@ def addAsset():
         tx_hash = contract.functions.addAsset(id, name, value).transact()
         web3.eth.waitForTransactionReceipt(tx_hash)
         return 'Transaction successful'
-    except Exception as e:
-        return f'Transaction error: {str(e)}'
+    except:
+        return 'Transaction error'
 
 @app.route('/transferAsset', methods=['GET', 'POST'])
 def transferAsset():
@@ -46,10 +47,13 @@ def transferAsset():
     new_owner = request.args.get('address')
     
     contract, web3 = connect()
-    tx_hash = contract.functions.transferAsset(id, new_owner).transact()
-    web3.eth.waitForTransactionReceipt(tx_hash)
-    return 'Asset transferred'
-
+    try:
+        tx_hash = contract.functions.transferAsset(id, new_owner).transact()
+        web3.eth.waitForTransactionReceipt(tx_hash)
+        return 'Asset transferred successfully'
+    except:
+        return 'Transaction error'
+    
 @app.route('/getAsset', methods=['GET', 'POST'])
 def getAsset():
     id = request.args.get('id')
@@ -75,38 +79,36 @@ def transferAssetPage():
 def getAssetPage():
     return render_template('getAsset.html')
 
-@app.route('/addassetform', methods = ['GET', 'POST'])
+@app.route('/addassetform', methods=['GET', 'POST'])
 def addassetform():
     id = request.form['id']
     name = request.form['name']
     value = request.form['value']
-
-    pipe = urllib3.PoolManager()
-    response = pipe.request('get', 'http://127.0.0.1:4000?id='+id+'&name='+name+'&value='+value)
-    response = response.data
-    response = response.decode('utf-8')
+    pipe=urllib3.PoolManager()
+    response = pipe.request('get', 'http://127.0.0.1:4000/addAsset?id='+id+'&name='+name+'&value='+value)
+    response=response.data
+    response=response.decode('utf-8')
     return render_template('addAsset.html', response=response)
 
-@app.route('/transferassetform', methods = ['GET', 'POST'])
+@app.route('/transferassetform', methods=['GET', 'POST'])
 def transferassetform():
     id = request.form['id']
     address = request.form['address']
-
-    pipe = urllib3.PoolManager()
-    response = pipe.request('get', 'http://127.0.0.1:4000?id='+id+'&address='+address)
-    response = response.data
-    response = response.decode('utf-8')
+    pipe=urllib3.PoolManager()
+    response = pipe.request('get', 'http://127.0.0.1:4000/transferAsset?id='+id+'&address='+address)
+    response=response.data
+    response=response.decode('utf-8')
     return render_template('transferAsset.html', response=response)
 
-@app.route('/getassetform', methods = ['GET', 'POST'])
+@app.route('/getassetform', methods=['GET', 'POST'])
 def getassetform():
     id = request.form['id']
-
-    pipe = urllib3.PoolManager()
-    response = pipe.request('get', 'http://127.0.0.1:4000?id='+id)
-    response = response.data
-    response = response.decode('utf-8')
-    return render_template('transferAsset.html', response=response)
+    print(id)
+    pipe=urllib3.PoolManager()
+    response = pipe.request('get', 'http://127.0.0.1:4000/getAsset?id'+id)
+    response=response.data
+    response=response.decode('utf-8')
+    return render_template('getAsset.html', response=response)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', 

@@ -12,7 +12,7 @@ contract ValuCoin {
         bool exists;
     }
 
-    mapping(uint => Asset) public assets;
+    mapping(uint => Asset) assets;
 
     constructor() {
         owner = msg.sender;
@@ -21,8 +21,8 @@ contract ValuCoin {
     function addAsset(uint _id, string memory _name, uint256 _value) public {
         require(msg.sender == owner, "Only the owner can add assets.");
         require(!assets[_id].exists, "Asset ID already exists.");
-        Asset memory new_asset = Asset(_id, _name, _value, owner, false);
-        assets[_id] = new_asset;
+        //Asset memory new_asset = Asset(_id, _name, _value, owner, false);
+        assets[_id] = Asset(_id, _name, _value, owner, true);
     }
 
     function transferAsset(uint _id, address _newOwner) public {
